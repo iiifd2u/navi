@@ -12,6 +12,17 @@
 
 ### Порядок работы
 
+**Установка:**
+
+Linux: 
+
+python -m venv venv
+
+venv/bin/activate
+
+pip install -t requirements.txt
+
+
 start - navi_main
 
 drawing - отрисовка города
