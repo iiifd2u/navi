@@ -1,11 +1,15 @@
 import heapq
 import os
+import sys
+import time
 import random
 from termcolor import colored
 from typing import Literal
 from utils.metrics import manhattan_distance
 from utils.config import SEP
+import functools
 
+# print = functools.partial(print, flush=True)
 
 Color = Literal[
     'red',
@@ -22,7 +26,7 @@ def get_color(num)->Color:
     return 'red'
 
 
-N = 40
+N = 30
 
 def add_streets(town, aval):
     vertical = random.sample(random.choice([list(range(0, N, 2)), list(range(1, N, 2))]),
@@ -90,8 +94,11 @@ def add_river(town, aval:set):
         river.append((r,c))
 
         coin = random.random()
-        if coin>=0.5:
+        if coin>=0.67:
             r+=1
+        elif coin >= 0.33:
+            r+=1
+            c+=1
         else:
             c+=1
 
@@ -116,11 +123,23 @@ def add_traffic(town, aval):
                 if j < 0 or j > N - 1: continue
                 if town[i][j] == '.':
                     if not neighbours:
-                        coin = random.randint(0, 9)
+                        coin = random.randint(0, 9) #Если соседей нет, трафик любой
                     else:
+                        # иначе только близкий к соседнему
                         coin = random.randint(max(0, min(neighbours)-1), min(9, max(neighbours)+1))
                     town[i][j] = str(coin)
                     neighbours.append(coin)
+
+def change_traffic(town, aval, threshold=2):
+    for pos in aval:
+        r, c = pos//N, pos%N
+        val = int(town[r][c])
+        # +-1 от текущего значения
+        new_val = random.randint(max(0, val-threshold), min(9, val+threshold))
+        town[r][c] = str(new_val)
+    return town, aval
+
+
 
 
 
@@ -143,7 +162,7 @@ def create_town(N):
     #add river
     add_river(town, aval)
 
-    # add traffic
+    # # add traffic
     add_traffic(town, aval)
     return town, aval
 
@@ -212,13 +231,18 @@ def pretty_print(town, path):
 
 
 if __name__ == '__main__':
-
+    # random.seed(1)
     town, aval = create_town(N)
+
     start_idx = random.choice(list(aval))
     end_idx = random.choice(list(aval))
     start = (start_idx//N, start_idx%N)
     end = (end_idx//N, end_idx%N)
 
     path = a_star(town, start, end)
-
-    pretty_print(town, path)
+    while True:
+        pretty_print(town, path)
+        town, aval = change_traffic(town, aval)
+        path = a_star(town, start, end)
+        time.sleep(1)
+        os.system('cls')
